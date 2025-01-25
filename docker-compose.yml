@@ -1,0 +1,24 @@
+services:
+  db:
+    image: postgres:13
+    environment:
+      POSTGRES_DB: restore_db
+      POSTGRES_USER: jcharles
+      POSTGRES_PASSWORD: 254500
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+
+  web:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgres://your_db_user:your_db_password@db:5432/your_db_name
+
+volumes:
+  postgres_data:
