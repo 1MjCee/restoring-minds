@@ -1,0 +1,36 @@
+{% extends 'unfold/layouts/base_simple.html' %}
+
+{% load cache humanize i18n unfold %}
+
+{% block breadcrumbs %}{% endblock %}
+
+{% block title %}
+    {% if subtitle %}
+        {{ subtitle }} |
+    {% endif %}
+
+    {{ title }} | {{ site_title|default:_('Admin Panel') }}
+{% endblock %}
+
+{% block branding %}
+    <h1 id="site-name">
+        <a href="{% url 'admin:index' %}">
+            {{ site_header|default:_('Admin Panel') }}
+        </a>
+    </h1>
+{% endblock %}
+
+{% block content %}
+    {% component "unfold/components/flex.html" with class="gap-3 flex-wrap" %}
+        {% for card in cards %}
+            {% component "unfold/components/card.html" with class="flex-1 lg:w-full sm:w-80" %}
+                {% component "unfold/components/title.html" %}
+                    <h6 class="text-center text-xs">{{ card.title }}</h6>
+                {% endcomponent %}
+                {% component "unfold/components/text.html" %}
+                    <h3 class="text-md text-center font-semibold">{{ card.value|intcomma }}</h3>
+                {% endcomponent %}
+            {% endcomponent %}
+        {% endfor %}
+    {% endcomponent %}
+{% endblock %}
