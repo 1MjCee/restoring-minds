@@ -84,13 +84,17 @@ class Agent(models.Model):
 
 """Task Model"""
 class Task(models.Model):
+    order = models.IntegerField(default=0)
     name = models.CharField(max_length=255)
     description = models.TextField(default="")
     expected_output = models.TextField(default="")
+    context = models.ManyToManyField('self', symmetrical=False, blank=True, related_name='dependent_tasks')
     assigned_agent = models.ForeignKey(Agent, on_delete=models.SET_NULL, null=True, blank=True, related_name='tasks')
 
     def __str__(self):
         return self.name
+    class Meta:
+        ordering = ['order']
     
 """Crew Model"""
 class Crew(models.Model):
@@ -110,6 +114,12 @@ class Company(models.Model):
     industry = models.CharField(max_length=255)
     location = models.CharField(max_length=255)
     website_url = models.URLField()
+    revenue_growth = models.FloatField(blank=True, null=True)
+    stress_level_score = models.IntegerField(blank=True, null=True)
+    wellness_culture_score = models.IntegerField(blank=True, null=True)
+    priority_score = models.FloatField(blank=True, null=True)
+    last_updated = models.DateField(auto_now=True)
+    notes = models.TextField(blank=True, null=True)
     targeting_reason = models.TextField()
 
     def __str__(self):
@@ -117,11 +127,79 @@ class Company(models.Model):
     
 """Contact Person Model"""
 class ContactPerson(models.Model):
+    CONTACT_METHODS = [
+        ('Email', 'Email'),
+        ('Phone', 'Phone'),
+        ('LinkedIn', 'LinkedIn'),
+    ]
     name = models.CharField(max_length=255)
-    role = models.CharField(max_length=255)
-    email = models.EmailField()
-    phone = models.CharField(max_length=20, blank=True, null=True)
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='contacts')
-
+    role = models.CharField(max_length=255)
+    email = models.EmailField(blank=True, null=True)
+    phone = models.CharField(max_length=20, blank=True, null=True)
+    linkedin_profile = models.URLField(blank=True, null=True)
+    preferred_contact_method = models.CharField(max_length=50, choices=CONTACT_METHODS, default='Email')
+    last_contact_date = models.DateField(blank=True, null=True)
+    notes = models.TextField(blank=True, null=True)
+    
     def __str__(self):
         return self.name
+
+"""Outreach Model"""
+class Outreach(models.Model):
+    OUTREACH_METHODS = [
+        ('Email', 'Email'),
+        ('LinkedIn', 'LinkedIn Message'),
+        ('Phone', 'Phone Call'),
+    ]
+
+    RESPONSE_STATUSES = [
+        ('No Response', 'No Response'),
+        ('Interested', 'Interested'),
+        ('Not Interested', 'Not Interested'),
+    ]
+
+    outreach_id = models.AutoField(primary_key=True)
+    contact = models.ForeignKey(ContactPerson, on_delete=models.CASCADE, related_name='outreach_attempts')
+    outreach_date = models.DateField(auto_now_add=True)
+    outreach_method = models.CharField(max_length=50, choices=OUTREACH_METHODS)
+    template_used = models.TextField()
+    response_status = models.CharField(max_length=50, choices=RESPONSE_STATUSES, default='No Response')
+    follow_up_date = models.DateField(blank=True, null=True)
+    notes = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return f"Outreach {self.outreach_id} to {self.contact.name}"
+
+"""CompetitorTrend Model"""
+class CompetitorTrend(models.Model):
+    IMPACT_LEVELS = [
+        ('High', 'High'),
+        ('Medium', 'Medium'),
+        ('Low', 'Low'),
+    ]
+
+    trend_id = models.AutoField(primary_key=True)
+    date = models.DateField(auto_now_add=True)
+    source = models.CharField(max_length=200)
+    trend_description = models.TextField()
+    competitor_name = models.CharField(max_length=100, blank=True, null=True)
+    impact_level = models.CharField(max_length=50, choices=IMPACT_LEVELS)
+    notes = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return f"Trend {self.trend_id} - {self.trend_description[:50]}"
+
+"""SuccessMetric Model"""
+class SuccessMetric(models.Model):
+    case_study_id = models.AutoField(primary_key=True)
+    company_name = models.CharField(max_length=200)
+    industry = models.CharField(max_length=100)
+    program_description = models.TextField()
+    roi = models.FloatField(blank=True, null=True)
+    productivity_gains = models.FloatField(blank=True, null=True)
+    employee_retention = models.FloatField(blank=True, null=True)
+    notes = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return f"Case Study {self.case_study_id} - {self.company_name}"

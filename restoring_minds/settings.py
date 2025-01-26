@@ -168,7 +168,7 @@ UNFOLD = {
         "navigation": [
             {
                 "separator": True,
-                "collapsible": True,
+                "collapsible": False,
                 "items": [
                     {
                         "title": _("Dashboard"),
@@ -176,21 +176,13 @@ UNFOLD = {
                         "link": reverse_lazy("admin:index"),
                         "permission": lambda request: request.user.is_superuser,
                     },
-                     {
-                        "title": _("Site Users"),
-                        "icon": "people",
-                        "link": reverse_lazy("admin:crewai_agents_siteuser_changelist"),
-                    },
-                    {
-                        "title": _("Company Leads"),
-                        "icon": "inventory",
-                        "link": reverse_lazy("admin:crewai_agents_company_changelist"),
-                    },
-                    {
-                        "title": _("Contacts"),
-                        "icon": "inventory",
-                        "link": reverse_lazy("admin:crewai_agents_contactperson_changelist"),
-                    },
+                ],
+            },
+            {
+                "title": _("Core AI Components"),
+                "separator": True,
+                "collapsible": False,
+                "items": [
                      {
                         "title": _("Agents"),
                         "icon": "wallet",
@@ -210,6 +202,62 @@ UNFOLD = {
                         "title": _("Tools"),
                         "icon": "inventory",
                         "link": reverse_lazy("admin:crewai_agents_tool_changelist"),
+                    },
+                ],
+            },
+            {
+                "title": _("Business Data Management"),
+                "separator": True,
+                "collapsible": False,
+                "items": [
+                     {
+                        "title": _("Companies"),
+                        "icon": "people",
+                        "link": reverse_lazy("admin:crewai_agents_company_changelist"),
+                    },
+                    {
+                        "title": _("Decision Makers"),
+                        "icon": "inventory",
+                        "link": reverse_lazy("admin:crewai_agents_contactperson_changelist"),
+                    },
+                    {
+                        "title": _("Outreach"),
+                        "icon": "inventory",
+                        "link": reverse_lazy("admin:crewai_agents_outreach_changelist"),
+                    },
+                ],
+            },
+            {
+                "title": _("Analytics and Insights"),
+                "separator": True,
+                "collapsible": False,
+                "items": [
+                     {
+                        "title": _("Success Metrics"),
+                        "icon": "people",
+                        "link": reverse_lazy("admin:crewai_agents_successmetric_changelist"),
+                    },
+                    {
+                        "title": _("Competitor Trends"),
+                        "icon": "inventory",
+                        "link": reverse_lazy("admin:crewai_agents_competitortrend_changelist"),
+                    },
+                    {
+                        "title": _("Reports"),
+                        "icon": "inventory",
+                        "link": reverse_lazy("admin:crewai_agents_contactperson_changelist"),
+                    },
+                ],
+            },
+             {
+                "title": _("System Settings"),
+                "separator": True,
+                "collapsible": False,
+                "items": [
+                     {
+                        "title": _("Users"),
+                        "icon": "people",
+                        "link": reverse_lazy("admin:crewai_agents_siteuser_changelist"),
                     },
                 ],
             },
