@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+from django.core.exceptions import ValidationError
+
 
 """Admin User Manager"""
 class SiteUserManager(BaseUserManager):
@@ -125,6 +127,18 @@ class Company(models.Model):
     def __str__(self):
         return self.company_name
     
+    def get_pricing_tier(self):
+        """
+        Returns the pricing tier for the company based on its employee size.
+        """
+        try:
+            return PricingTier.objects.filter(
+                min_employees__lte=self.employee_size,
+                max_employees__gte=self.employee_size
+            ).first()
+        except PricingTier.DoesNotExist:
+            return None
+    
 """Contact Person Model"""
 class ContactPerson(models.Model):
     CONTACT_METHODS = [
@@ -154,22 +168,23 @@ class Outreach(models.Model):
     ]
 
     RESPONSE_STATUSES = [
-        ('No Response', 'No Response'),
+        ('awaiting', 'Awaiting Response'),
         ('Interested', 'Interested'),
+        ('No Response', 'No Response'),
         ('Not Interested', 'Not Interested'),
     ]
 
     outreach_id = models.AutoField(primary_key=True)
-    contact = models.ForeignKey(ContactPerson, on_delete=models.CASCADE, related_name='outreach_attempts')
-    outreach_date = models.DateField(auto_now_add=True)
-    outreach_method = models.CharField(max_length=50, choices=OUTREACH_METHODS)
-    template_used = models.TextField()
+    company = models.OneToOneField(Company, on_delete=models.CASCADE, blank=True, null=True, related_name='outreach_company')
+    outreach_date = models.DateField(null=True, blank=True, default=None)
+    message = models.TextField(blank=True, null=True, default="")  
+    message_type = models.CharField(max_length=50, choices=OUTREACH_METHODS, default='Email')
     response_status = models.CharField(max_length=50, choices=RESPONSE_STATUSES, default='No Response')
-    follow_up_date = models.DateField(blank=True, null=True)
-    notes = models.TextField(blank=True, null=True)
+    follow_up_date = models.DateField(blank=True, null=True, default=None)
+    comments = models.TextField(blank=True, null=True, default=None)
 
     def __str__(self):
-        return f"Outreach {self.outreach_id} to {self.contact.name}"
+        return f"Outreach {self.outreach_id} to {self.company}"
 
 """CompetitorTrend Model"""
 class CompetitorTrend(models.Model):
@@ -182,24 +197,49 @@ class CompetitorTrend(models.Model):
     trend_id = models.AutoField(primary_key=True)
     date = models.DateField(auto_now_add=True)
     source = models.CharField(max_length=200)
-    trend_description = models.TextField()
+    trend_description = models.TextField(default="")
     competitor_name = models.CharField(max_length=100, blank=True, null=True)
     impact_level = models.CharField(max_length=50, choices=IMPACT_LEVELS)
-    notes = models.TextField(blank=True, null=True)
+    notes = models.TextField(default="")
 
     def __str__(self):
         return f"Trend {self.trend_id} - {self.trend_description[:50]}"
-
-"""SuccessMetric Model"""
-class SuccessMetric(models.Model):
-    case_study_id = models.AutoField(primary_key=True)
-    company_name = models.CharField(max_length=200)
-    industry = models.CharField(max_length=100)
-    program_description = models.TextField()
-    roi = models.FloatField(blank=True, null=True)
-    productivity_gains = models.FloatField(blank=True, null=True)
-    employee_retention = models.FloatField(blank=True, null=True)
-    notes = models.TextField(blank=True, null=True)
+    
+"""PricingTier Model"""
+class PricingTier(models.Model):
+    min_employees = models.IntegerField(help_text="Minimum number of employees for this tier.")
+    max_employees = models.IntegerField(help_text="Maximum number of employees for this tier.")
+    price = models.DecimalField(max_digits=10, decimal_places=2, help_text="Price for this tier.")
+    features = models.TextField(blank=True, null=True, help_text="Features included in this tier.")
 
     def __str__(self):
-        return f"Case Study {self.case_study_id} - {self.company_name}"
+        return f"Tier for {self.min_employees}-{self.max_employees} employees - ${self.price}"
+
+    def clean(self):
+        """
+        Validate that the min_employees is less than max_employees.
+        Also ensure that the employee ranges do not overlap with existing tiers.
+        """
+        if self.min_employees >= self.max_employees:
+            raise ValidationError("min_employees must be less than max_employees.")
+
+        # Check for overlapping employee ranges
+        overlapping_tiers = PricingTier.objects.filter(
+            min_employees__lte=self.max_employees,
+            max_employees__gte=self.min_employees
+        ).exclude(pk=self.pk)  
+
+        if overlapping_tiers.exists():
+            raise ValidationError("This employee range overlaps with an existing tier.")
+
+    def save(self, *args, **kwargs):
+        """
+        Override the save method to enforce a maximum of 3 pricing tiers.
+        """
+        if PricingTier.objects.count() >= 3 and not self.pk:
+            raise ValidationError("Only 3 pricing tiers are allowed.")
+        super().save(*args, **kwargs)
+
+    class Meta:
+        ordering = ['min_employees']
+

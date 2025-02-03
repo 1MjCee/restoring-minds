@@ -1,5 +1,5 @@
 from django.db.models import Q
-from typing import List, Dict
+from typing import List, Dict, Optional
 from crewai.tools import tool
 from django.core.exceptions import ValidationError
 from django.apps import apps
@@ -9,9 +9,9 @@ from django.apps import apps
 def populate_competitor_trend(
     source: str,
     trend_description: str,
-    competitor_name: str = None,
+    competitor_name: Optional[str] = None,
     impact_level: str = "Medium",
-    notes: str = None,
+    notes: Optional[str] = None,
 ) -> str:
     """
     Insert competitor trend data into the 'competitor_trends' table using Django ORM.
@@ -45,9 +45,9 @@ def populate_competitor_trend(
 """Get Competitor Trends Data Tool"""
 @tool("get_competitor_trends_data")
 def get_competitor_trends_data(
-    competitor_name: str = None,
-    impact_level: str = None,
-    source: str = None,
+    competitor_name: Optional[str] = None,
+    impact_level: Optional[str] = None,
+    source: Optional[str] = None,
 ) -> List[Dict]:
     """
     Retrieve competitor trend data based on provided filters (competitor_name, impact_level, source) using Django ORM.

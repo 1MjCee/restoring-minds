@@ -1,5 +1,5 @@
 from django.db.models import Q
-from typing import List, Dict
+from typing import List, Dict, Optional
 from crewai.tools import tool
 from django.core.exceptions import ValidationError
 from django.apps import apps
@@ -7,34 +7,40 @@ from django.apps import apps
 """Populate Outreach Tool"""
 @tool("populate_outreach")
 def populate_outreach(
-    contact_id: int,
-    outreach_method: str,
-    template_used: str,
-    response_status: str = "No Response",
-    follow_up_date: str = None,
-    notes: str = None,
+    company_id: int,
+    message: str,
+    response_status: str,
+    follow_up_date: Optional[str] = None,
+    comments: Optional[str] = None,
+    message_type: str = 'Email',
+    outreach_date: Optional[str] = None,
 ) -> str:
     """
     Insert outreach data into the 'outreach' table using Django ORM.
 
-    :param contact_id: ID of the contact person
-    :param outreach_method: Method of outreach (e.g., "Email", "LinkedIn")
-    :param template_used: Template used for outreach
-    :param response_status: Response status (default: "No Response")
-    :param follow_up_date: Follow-up date (optional)
-    :param notes: Additional notes (optional)
-    :return: A success or failure message
+    Args:
+        company_id (int): ID of the company associated with the outreach.
+        outreach_date (str): Date of the outreach in string format (e.g., "YYYY-MM-DD").
+        message_type (str): Type of message used for outreach (e.g., "Email", "LinkedIn").
+        message (str): The content of the outreach message.
+        response_status (str, optional): Status of the response to the outreach. Defaults to "No Response".
+        follow_up_date (str, optional): Date for a follow-up action, if applicable. Defaults to None.
+        comments (str, optional): Additional notes or comments related to the outreach. Defaults to None.
+
+    Returns:
+        str: A success or failure message indicating the outcome of the operation.
     """
     from django.apps import apps
     Outreach = apps.get_model('crewai_agents', 'Outreach')
     try:
         new_outreach = Outreach(
-            contact_id=contact_id,
-            outreach_method=outreach_method,
-            template_used=template_used,
+            company_id=company_id,
+            outreach_date=outreach_date,
+            message_type=message_type,
+            message=message,
             response_status=response_status,
             follow_up_date=follow_up_date,
-            notes=notes,
+            comments=comments,
         )
         new_outreach.full_clean()
         new_outreach.save()

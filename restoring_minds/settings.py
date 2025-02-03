@@ -120,7 +120,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 UNFOLD = {
     "SITE_TITLE": "Restoring Minds",
-    "SITE_HEADER": "Restoring Minds Admin",
+    "SITE_HEADER": "Admin Panel",
     "SITE_URL": "/",
     
     "SITE_SYMBOL": "speed",  
@@ -179,73 +179,69 @@ UNFOLD = {
                 ],
             },
             {
+                "title": _("Data Management"),
+                "separator": True,
+                "collapsible": False,
+                "items": [
+                    {
+                        "title": _("Outreach"),
+                        "icon": "mark_email_unread",
+                        "link": reverse_lazy("admin:crewai_agents_outreach_changelist"),
+                    },
+                     {
+                        "title": _("Companies"),
+                        "icon": "add_business",
+                        "link": reverse_lazy("admin:crewai_agents_company_changelist"),
+                    },
+                    {
+                        "title": _("Contacts"),
+                        "icon": "guardian",
+                        "link": reverse_lazy("admin:crewai_agents_contactperson_changelist"),
+                    },
+
+                ],
+            },
+            {
+                "title": _("Analytics & Insights"),
+                "separator": True,
+                "collapsible": False,
+                "items": [
+                    {
+                        "title": _("Pricing"),
+                        "icon": "price_check",
+                        "link": reverse_lazy("admin:crewai_agents_pricingtier_changelist"),
+                    },
+                    {
+                        "title": _("Market Trends"),
+                        "icon": "trending_up",
+                        "link": reverse_lazy("admin:crewai_agents_competitortrend_changelist"),
+                    },
+                ],
+            },
+             {
                 "title": _("Core AI Components"),
                 "separator": True,
                 "collapsible": False,
                 "items": [
                      {
                         "title": _("Agents"),
-                        "icon": "wallet",
+                        "icon": "badge",
                         "link": reverse_lazy("admin:crewai_agents_agent_changelist"),
                     },
                     {
                         "title": _("Tasks"),
-                        "icon": "contract",
+                        "icon": "task",
                         "link": reverse_lazy("admin:crewai_agents_task_changelist"),
                     },
                     {
-                        "title": _("Crew"),
-                        "icon": "inventory",
-                        "link": reverse_lazy("admin:crewai_agents_crew_changelist"),
-                    },
-                    {
                         "title": _("Tools"),
-                        "icon": "inventory",
+                        "icon": "construction",
                         "link": reverse_lazy("admin:crewai_agents_tool_changelist"),
                     },
-                ],
-            },
-            {
-                "title": _("Business Data Management"),
-                "separator": True,
-                "collapsible": False,
-                "items": [
-                     {
-                        "title": _("Companies"),
-                        "icon": "people",
-                        "link": reverse_lazy("admin:crewai_agents_company_changelist"),
-                    },
                     {
-                        "title": _("Decision Makers"),
-                        "icon": "inventory",
-                        "link": reverse_lazy("admin:crewai_agents_contactperson_changelist"),
-                    },
-                    {
-                        "title": _("Outreach"),
-                        "icon": "inventory",
-                        "link": reverse_lazy("admin:crewai_agents_outreach_changelist"),
-                    },
-                ],
-            },
-            {
-                "title": _("Analytics and Insights"),
-                "separator": True,
-                "collapsible": False,
-                "items": [
-                     {
-                        "title": _("Success Metrics"),
-                        "icon": "people",
-                        "link": reverse_lazy("admin:crewai_agents_successmetric_changelist"),
-                    },
-                    {
-                        "title": _("Competitor Trends"),
-                        "icon": "inventory",
-                        "link": reverse_lazy("admin:crewai_agents_competitortrend_changelist"),
-                    },
-                    {
-                        "title": _("Reports"),
-                        "icon": "inventory",
-                        "link": reverse_lazy("admin:crewai_agents_contactperson_changelist"),
+                        "title": _("Crew"),
+                        "icon": "groups_3",
+                        "link": reverse_lazy("admin:crewai_agents_crew_changelist"),
                     },
                 ],
             },
@@ -256,7 +252,7 @@ UNFOLD = {
                 "items": [
                      {
                         "title": _("Users"),
-                        "icon": "people",
+                        "icon": "manage_accounts",
                         "link": reverse_lazy("admin:crewai_agents_siteuser_changelist"),
                     },
                 ],

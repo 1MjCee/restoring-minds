@@ -1,5 +1,5 @@
 from crewai import Agent
-from tools import llm, serper_dev_tool, get_companies_data, populate_companies, populate_contact_persons
+from tools import llm, serper_dev_tool, get_companies_data, populate_companies, populate_contact_persons, populate_outreach, populate_competitor_trend
 
 def get_agents():
     """Load agents from the database and return a list of CrewAI Agent objects."""
@@ -22,6 +22,10 @@ def get_agents():
                 tools.append(populate_contact_persons)
             if tool.name == 'GetCompanyData':
                 tools.append(get_companies_data)
+            if tool.name == 'PopulateOutreach':
+                tools.append(populate_outreach)
+            if tool.name == 'PopulateCompetitorTrends':
+                tools.append(populate_competitor_trend)
 
 
         agent = Agent(

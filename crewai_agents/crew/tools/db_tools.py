@@ -1,19 +1,22 @@
 from django.db.models import Q
-from typing import List, Dict
+from typing import List, Dict, Optional
 from crewai.tools import tool
 from django.core.exceptions import ValidationError
 from django.apps import apps
-# Company = apps.get_model('crewai_agents', 'Company')
-
-# from django.apps import apps
-# ContactPerson = apps.get_model('crewai_agents', 'ContactPerson')
-
+from pydantic import BaseModel
 
 """Populate Companies Tool"""
 @tool("populate_companies")
-def populate_companies(company_name: str, employee_size: int, industry: str, location: str, website_url: str, targeting_reason: str) -> str:
+def populate_companies(
+    company_name: str,
+    employee_size: int,
+    industry: str,
+    location: str,
+    website_url: str,
+    targeting_reason: str
+) -> str:
     """
-    Insert company data into the 'companies' table using Django ORM.
+    Insert a single company record into the 'companies' table using Django ORM.
 
     :param company_name: Name of the company
     :param employee_size: Number of employees
@@ -24,23 +27,26 @@ def populate_companies(company_name: str, employee_size: int, industry: str, loc
     :return: A success or failure message
     """
     from django.apps import apps
+    from django.core.exceptions import ValidationError
+
     Company = apps.get_model('crewai_agents', 'Company')
+
     try:
         new_company = Company(
-            company_name=company_name, 
-            employee_size=employee_size, 
-            industry=industry, 
-            location=location, 
-            website_url=website_url, 
+            company_name=company_name,
+            employee_size=employee_size,
+            industry=industry,
+            location=location,
+            website_url=website_url,
             targeting_reason=targeting_reason
         )
-        new_company.full_clean() 
-        new_company.save()  
-        return "Company data populated successfully."
+        new_company.full_clean()
+        new_company.save()
+        return f"Successfully saved company: {company_name}"
     except ValidationError as e:
-        return f"Failed to populate company data due to validation error: {str(e)}"
+        return f"Validation error for {company_name}: {str(e)}"
     except Exception as e:
-        return f"Failed to populate company data: {str(e)}"
+        return f"Error saving {company_name}: {str(e)}"
 
 
 """Populate Contact Persons Tool"""
@@ -74,34 +80,22 @@ def populate_contact_persons(name: str, role: str, email: str, phone: str, compa
     except Exception as e:
         return f"Failed to populate contact person data: {str(e)}"
 
+
 """Get Companies Data Tool"""
 @tool("get_companies_data")
-def get_companies_data(company_name: str = None, industry: str = None, location: str = None) -> List[Dict]:
+def get_companies_data() -> List[Dict]:
     """
-    Retrieve company data based on provided filters (company_name, industry, location) using Django ORM.
+    Retrieve all company data without filters using Django ORM.
+    If filters are provided, it will fetch companies based on those filters.
 
-    :param company_name: Name of the company to search (optional)
-    :param industry: Industry type to filter companies (optional)
-    :param location: Location of the company to filter (optional)
-    :return: A list of company data matching the criteria
+    :return: A list of all company data or filtered company data if filters are provided.
     """
-    from django.apps import apps
     Company = apps.get_model('crewai_agents', 'Company')
-    ContactPerson = apps.get_model('crewai_agents', 'ContactPerson')
+    
     try:
-        # Build the query using Django's Q objects for dynamic filtering
-        query = Q()
-        if company_name:
-            query &= Q(company_name__icontains=company_name)
-        if industry:
-            query &= Q(industry__icontains=industry)
-        if location:
-            query &= Q(location__icontains=location)
+        # Fetch all companies
+        companies = Company.objects.all()
 
-        # Fetch matching results
-        companies = Company.objects.filter(query)
-
-        # Prepare results
         results = []
         for company in companies:
             company_data = {
@@ -118,7 +112,7 @@ def get_companies_data(company_name: str = None, industry: str = None, location:
                         "email": contact.email,
                         "phone": contact.phone
                     }
-                    for contact in company.contact_persons.all() 
+                    for contact in company.contacts.all()
                 ]
             }
             results.append(company_data)
