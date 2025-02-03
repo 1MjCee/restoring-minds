@@ -15,7 +15,6 @@ DEBUG = False
 
 ALLOWED_HOSTS = ['54.205.49.168', '*']
 
-
 # Application definition
 INSTALLED_APPS = [
     "unfold",
@@ -115,6 +114,11 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+if DEBUG:
+    STATICFILES_DIRS = [
+        os.path.join(BASE_DIR, 'static'),
+    ]
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
