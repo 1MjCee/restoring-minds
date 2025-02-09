@@ -1,0 +1,52 @@
+services:
+  db:
+    image: postgres:14
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=restore_db1
+      - POSTGRES_USER=jcharles
+      - POSTGRES_PASSWORD=254500
+    ports:
+      - "5432:5432"
+
+  web:
+    build: .
+    command: sh -c "python manage.py collectstatic --noinput && gunicorn restoring_minds.wsgi:application --bind unix:/app/app.sock"
+    volumes:
+      - .:/app
+      - static_volume:/app/static
+      - media_volume:/app/media
+      - postgres_data:/app/data
+      - socket_volume:/app
+    environment:
+      - DJANGO_SETTINGS_MODULE=restoring_minds.settings
+      - PYTHONUNBUFFERED=1
+      - DJANGO_SUPERUSER_EMAIL=restoringmindscs@gmail.com
+      - DJANGO_SUPERUSER_PASSWORD=restoring@123
+      - DJANGO_SUPERUSER_FIRSTNAME=Jacqueline
+      - DJANGO_SUPERUSER_LASTNAME=Campbell
+    depends_on:
+      - db
+
+  nginx:
+    image: nginx:1.21
+    volumes:
+      - ./nginx/restore.conf:/etc/nginx/conf.d/default.conf:ro
+      - static_volume:/app/static
+      - media_volume:/app/media
+      - socket_volume:/app
+      - ./nginx/proxy_params:/etc/nginx/proxy_params:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - /etc/ssl:/etc/ssl:ro
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - web
+
+volumes:
+  static_volume:
+  media_volume:
+  postgres_data:
+  socket_volume:

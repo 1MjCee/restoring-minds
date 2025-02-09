@@ -6,7 +6,10 @@ from .models import Crew
 from django.utils.html import format_html
 from django.urls import path, reverse
 import subprocess
-import os 
+import os
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from unfold.forms import AdminPasswordChangeForm, UserChangeForm, UserCreationForm
+
 
 """Crew Admin"""
 @admin.register(Crew)
@@ -85,7 +88,12 @@ class CrewAdmin(ModelAdmin):
 
 """ Site User Admin """
 @admin.register(SiteUser)
-class SiteUserAdmin(ModelAdmin):
+class SiteUserAdmin(BaseUserAdmin, ModelAdmin):
+
+    form = UserChangeForm
+    add_form = UserCreationForm
+    change_password_form = AdminPasswordChangeForm
+
     list_display = ('email', 'first_name', 'last_name', 'is_staff', 'is_active')
     list_filter = ('is_staff', 'is_active')
     search_fields = ('email', 'first_name', 'last_name')
