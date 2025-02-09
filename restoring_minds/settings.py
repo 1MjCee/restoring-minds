@@ -21,7 +21,7 @@ INSTALLED_APPS = [
     "unfold.contrib.filters", 
     "unfold.contrib.forms",  
     "unfold.contrib.inlines",  
-    "unfold.contrib.import_export", 
+    "unfold.contrib.import_export",
     "django.contrib.admin",
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -63,14 +63,6 @@ TEMPLATES = [
 WSGI_APPLICATION = 'restoring_minds.wsgi.application'
 
 
-# Database
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
-
 """Define Database Configuration"""
 DATABASES = {
     'default': {
@@ -78,7 +70,7 @@ DATABASES = {
         'NAME': 'restore_db1',                      # Database name
         'USER': 'jcharles',                         # Database user
         'PASSWORD': '254500',                # Database password
-        'HOST': 'db',                        # Database host
+        'HOST': 'localhost',                        # Database host
         'PORT': '5432',                             # Database port
     }
 }
@@ -99,6 +91,23 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'django.request': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}
 
 
 # Internationalization
@@ -264,3 +273,6 @@ UNFOLD = {
         ],
     },
 }
+
+
+CREW_PROCESS_FILE = os.path.join(BASE_DIR, 'crew_processes.json')

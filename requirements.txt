@@ -7,4 +7,5 @@ crewai
 crewai-tools
 django-unfold
 gunicorn
+psutil>=5.9.0
 

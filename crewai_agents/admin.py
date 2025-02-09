@@ -9,81 +9,14 @@ import subprocess
 import os
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from unfold.forms import AdminPasswordChangeForm, UserChangeForm, UserCreationForm
+from .CustomAdmins import CrewAdmin
 
+admin.site.site_header = "Restoring Minds Admin"
+admin.site.site_title = "Restoring Minds Admin Portal"
+admin.site.index_title = "Welcome to Restoring Minds Admin Portal"
 
 """Crew Admin"""
-@admin.register(Crew)
-class CrewAdmin(ModelAdmin):
-    list_display = ('name', 'process', 'verbose', 'run_button', 'stop_button')
-    filter_horizontal = ('agents', 'tasks')
-    ordering = ('name',)
-
-    def run_button(self, obj):
-        return format_html(
-            '<a class="button button-primary" href="{}">Run</a>',
-            reverse('admin:run_script', args=[obj.pk])
-        )
-    run_button.short_description = "Run Crew"
-
-    # Stop Button
-    def stop_button(self, obj):
-        return format_html(
-            '<a class="button button-danger" href="{}">Stop</a>',
-            reverse('admin:stop_script', args=[obj.pk])
-        )
-    stop_button.short_description = "Stop Crew"
-
-    def get_urls(self):
-        urls = super().get_urls()
-        custom_urls = [
-            path('run-script/<int:crew_id>/', self.run_script_view, name='run_script'),
-            path('stop-script/<int:crew_id>/', self.stop_script_view, name='stop_script'),
-        ]
-        return custom_urls + urls
-
-    def run_script_view(self, request, crew_id):
-        try:
-            # Check if the script is already running
-            project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            main_script_path = os.path.join(project_root, 'crewai_agents', 'crew', 'main.py')
-            
-            # Check if the script is already running
-            script_process = subprocess.run(
-                ["pgrep", "-f", "main.py"], 
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE
-            )
-            
-            if script_process.returncode == 0:
-                messages.info(request, f"Crew {crew_id} is already running.")
-            else:
-                subprocess.run(["python3", main_script_path], check=True)
-                messages.success(request, f"Crew {crew_id} executed successfully!")
-        except subprocess.CalledProcessError as e:
-            messages.error(request, f"Error executing crew {crew_id}: {str(e)}")
-        except Exception as e:
-            messages.error(request, f"Unexpected error: {str(e)}")
-        
-        return self.response_post_save_change(request, None)
-
-
-    def stop_script_view(self, request, crew_id):
-        try:
-            # Check if the script is running before stopping
-            script_process = subprocess.run(
-                ["pgrep", "-f", "main.py"], 
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE
-            )
-            
-            if script_process.returncode == 0:
-                # Stop the script if it's running
-                subprocess.run(["pkill", "-f", "main.py"], check=True)
-                messages.success(request, f"Crew {crew_id} stopped successfully!")
-            else:
-                messages.info(request, f"Crew {crew_id} not running.")
-        except Exception as e:
-            messages.error(request, f"Error stopping script for crew {crew_id}: {str(e)}")
-        
-        return self.response_post_save_change(request, None)
+admin.site.register(Crew, CrewAdmin)
 
 
 """ Site User Admin """
