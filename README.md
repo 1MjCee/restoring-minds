@@ -1,4 +1,4 @@
-# Image Restoring Minds - AI Prospecting System
+# Restoring Minds - AI Prospecting System
 
 ## Overview
 The AI Prospecting System is a multi-agent platform designed to identify, analyze, and engage with fast-growing companies in the DFW area that could benefit from stress management and emotional intelligence training services. The system utilizes CrewAI for agent orchestration, LangChain for AI interactions, Django for the web framework, and Docker for containerized deployment.
@@ -23,7 +23,10 @@ The system consists of four specialized AI agents:
 ## Installation
 
 ### Prerequisites
-- Python 3.9+
+- Python 3.10+
+- django
+- crewai and crewai-tools
+- langchain
 - Docker and Docker Compose
 - Git
 
