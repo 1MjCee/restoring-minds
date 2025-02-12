@@ -11,7 +11,7 @@ AUTH_USER_MODEL = 'crewai_agents.SiteUser'
 SECRET_KEY = 'django-insecure-j4652df$+!r3w2-5@-emifnrrskw3w5r(y(z#80&+ue+h$!ief'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['54.205.49.168', '*', '127.0.0.1']
 
@@ -70,7 +70,7 @@ DATABASES = {
         'NAME': 'restore_db1',                      # Database name
         'USER': 'jcharles',                         # Database user
         'PASSWORD': '254500',                # Database password
-        'HOST': 'localhost',                        # Database host
+        'HOST': 'db',                        # Database host
         'PORT': '5432',                             # Database port
     }
 }

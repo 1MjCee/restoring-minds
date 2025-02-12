@@ -1,5 +1,4 @@
 from django.contrib import admin
-from django.contrib.admin import ModelAdmin
 from django.urls import path
 from django.utils.html import format_html
 from django.urls import reverse
@@ -13,6 +12,7 @@ import psutil
 import tempfile
 import logging
 import time
+from unfold.admin import ModelAdmin
 
 logger = logging.getLogger(__name__)
 
@@ -159,8 +159,8 @@ class CrewAdmin(ModelAdmin):
                 
                 process = subprocess.Popen(
                     f"python {main_script_path}",
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
+                    # stdout=subprocess.PIPE,
+                    # stderr=subprocess.PIPE,
                     shell=True,
                     env=env,
                     text=True,
