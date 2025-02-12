@@ -1,5 +1,8 @@
 # Restoring Minds - AI Prospecting System
 
+## Project Documentation
+- [View Project Presentation](https://docs.google.com/presentation/d/1nr6u6IgGZS-Mvy1X0OSlNuj_unJ8xBY1QURU4YmuV6g/edit?usp=sharing)
+
 ## Overview
 The AI Prospecting System is a multi-agent platform designed to identify, analyze, and engage with fast-growing companies in the DFW area that could benefit from stress management and emotional intelligence training services. The system utilizes CrewAI for agent orchestration, LangChain for AI interactions, Django for the web framework, and Docker for containerized deployment.
 
@@ -34,14 +37,14 @@ The system consists of four specialized AI agents:
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/your-org/image-restoring-minds-ai.git
-cd image-restoring-minds-ai
+git clone https://github.com/username/restoring-minds-ai.git
+cd restoring-minds-ai
 ```
 
 2. Create and activate a virtual environment:
 ```bash
 python3 -m venv .venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source .venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
 
 3. Install dependencies:
