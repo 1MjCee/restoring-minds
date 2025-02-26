@@ -3,6 +3,8 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, Permis
 from django.core.exceptions import ValidationError
 from django.utils.html import format_html
 import uuid
+from django.utils import timezone
+import datetime
 
 
 """Admin User Manager"""
@@ -76,6 +78,7 @@ class Company(models.Model):
     wellness_culture_score = models.IntegerField(blank=True, null=True)
     priority_score = models.FloatField(blank=True, null=True)
     last_updated = models.DateField(auto_now=True)
+    created_at = models.DateField(default=datetime.date.today)
     notes = models.TextField(blank=True, null=True)
     targeting_reason = models.TextField()
 
@@ -195,8 +198,6 @@ class Email(models.Model):
 class Outreach(models.Model):
     STATUS_CHOICES = [
         ('pending', 'Pending'),
-        ('updated', 'Updated'),
-        ('sent', 'Email Sent'),
         ('completed', 'Completed'),
         ('failed', 'Failed')
     ]
@@ -204,6 +205,7 @@ class Outreach(models.Model):
     company = models.OneToOneField(Company, on_delete=models.CASCADE, blank=True, null=True, related_name='outreach_company')
     email = models.ForeignKey(Email, on_delete=models.SET_NULL, blank=True, null=True, related_name='outreach_email')
     outreach_date = models.DateField(null=True, blank=True, default=None)
+    created_at = models.DateTimeField(default=datetime.date.today)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     comments = models.TextField(blank=True, null=True, default=None)
 
