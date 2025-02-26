@@ -1,13 +1,13 @@
 import os
-import django
 import sys
-from crew import get_crew
+import django
+from configs import market_researcher, business_researcher, outreach_specialist
 
-"""Calcuate the path to the project root directory."""
-current_dir = os.path.dirname(os.path.abspath(__file__))  
-project_root = os.path.abspath(os.path.join(current_dir, '../../')) 
+"""Calculate the path to the project root directory."""
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.abspath(os.path.join(current_dir, '../../'))
 
-"""add the project root to sys.path"""
+"""Add the project root to sys.path"""
 if project_root not in sys.path:
     sys.path.append(project_root)
 
@@ -15,14 +15,20 @@ if project_root not in sys.path:
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'restoring_minds.settings')
 django.setup()
 
-"""Run the crew"""
-def main():
-    crew = get_crew("Prospect AI Crew")
+def run_manually(agent_name=None, input_data=None):
+    """Run a single agent or all agents manually and print the results."""
+    agents = {
+        "market_researcher": market_researcher,
+        "business_researcher": business_researcher,
+        "outreach_specialist": outreach_specialist
+    }
 
-    # Run the crew
-    result = crew.kickoff()
-    print("Crew Execution Result:")
-    print(result)
+    print("Running all agents manually...")
+    for name, agent in agents.items():
+        print(f"Running {name}...")
+        result = agent.run(f"Perform your task for {name}")
+        print(f"{name} Result: {result}")
 
 if __name__ == "__main__":
-    main()
+    run_manually() 
+    

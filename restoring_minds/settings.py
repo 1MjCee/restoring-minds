@@ -1,19 +1,48 @@
 from django.urls import reverse_lazy
 from pathlib import Path
 from django.utils.translation import gettext_lazy as _
+from dotenv import load_dotenv
 import os
+from celery.schedules import crontab
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 AUTH_USER_MODEL = 'crewai_agents.SiteUser'
 
+load_dotenv(BASE_DIR / '.env')
+
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-j4652df$+!r3w2-5@-emifnrrskw3w5r(y(z#80&+ue+h$!ief'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
-ALLOWED_HOSTS = ['54.205.49.168', '*', '127.0.0.1']
+ALLOWED_HOSTS = ['jacquelinecampbellai.com', '*', '127.0.0.1']
+
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+
+CELERY_BEAT_SCHEDULE = {
+    "market_researcher_daily": {
+        "task": "myapp.tasks.run_market_researcher_scheduled",
+        "schedule": crontab(hour=8, minute=0),
+    },
+    "business_researcher_daily": {
+        "task": "myapp.tasks.run_business_researcher_scheduled",
+        "schedule": crontab(hour=8, minute=0),
+    },
+    "decision_maker_daily": {
+        "task": "myapp.tasks.run_decision_maker_scheduled",
+        "schedule": crontab(hour=8, minute=0),
+    },
+    "outreach_specialist_daily": {
+        "task": "myapp.tasks.run_outreach_specialist_scheduled",
+        "schedule": crontab(hour=8, minute=0),
+    },
+}
 
 # Application definition
 INSTALLED_APPS = [
@@ -66,14 +95,25 @@ WSGI_APPLICATION = 'restoring_minds.wsgi.application'
 """Define Database Configuration"""
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',  # PostgreSQL database backend
-        'NAME': 'restore_db1',                      # Database name
-        'USER': 'jcharles',                         # Database user
-        'PASSWORD': '254500',                # Database password
-        'HOST': 'db',                        # Database host
-        'PORT': '5432',                             # Database port
+        'ENGINE': 'django.db.backends.postgresql', 
+        'NAME': 'restoring_db',                     
+        'USER': 'jcharles',                        
+        'PASSWORD': '254500',               
+        'HOST': 'localhost',                       
+        'PORT': '5432',                             
     }
 }
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': os.environ.get('DB_NAME'),
+#         'USER': os.environ.get('DB_USER'),
+#         'PASSWORD': os.environ.get('DB_PASSWORD'),
+#         'HOST': os.environ.get('DB_HOST'),
+#         'PORT': os.environ.get('DB_PORT'),
+#     }
+# }
 
 
 # Password validation
@@ -206,11 +246,11 @@ UNFOLD = {
                         "icon": "add_business",
                         "link": reverse_lazy("admin:crewai_agents_company_changelist"),
                     },
-                    {
-                        "title": _("Contacts"),
-                        "icon": "guardian",
-                        "link": reverse_lazy("admin:crewai_agents_contactperson_changelist"),
-                    },
+                    # {
+                    #     "title": _("Emails"),
+                    #     "icon": "guardian",
+                    #     "link": reverse_lazy("admin:crewai_agents_email_changelist"),
+                    # },
 
                 ],
             },
@@ -236,26 +276,26 @@ UNFOLD = {
                 "separator": True,
                 "collapsible": False,
                 "items": [
-                     {
-                        "title": _("Agents"),
-                        "icon": "badge",
-                        "link": reverse_lazy("admin:crewai_agents_agent_changelist"),
-                    },
-                    {
-                        "title": _("Tasks"),
-                        "icon": "task",
-                        "link": reverse_lazy("admin:crewai_agents_task_changelist"),
-                    },
-                    {
-                        "title": _("Tools"),
-                        "icon": "construction",
-                        "link": reverse_lazy("admin:crewai_agents_tool_changelist"),
-                    },
-                    {
-                        "title": _("Crew"),
-                        "icon": "groups_3",
-                        "link": reverse_lazy("admin:crewai_agents_crew_changelist"),
-                    },
+                    #  {
+                    #     "title": _("Agents"),
+                    #     "icon": "badge",
+                    #     "link": reverse_lazy("admin:crewai_agents_agent_changelist"),
+                    # },
+                    # {
+                    #     "title": _("Tasks"),
+                    #     "icon": "task",
+                    #     "link": reverse_lazy("admin:crewai_agents_task_changelist"),
+                    # },
+                    # {
+                    #     "title": _("Tools"),
+                    #     "icon": "construction",
+                    #     "link": reverse_lazy("admin:crewai_agents_tool_changelist"),
+                    # },
+                    # {
+                    #     "title": _("Crew"),
+                    #     "icon": "groups_3",
+                    #     "link": reverse_lazy("admin:crewai_agents_crew_changelist"),
+                    # },
                 ],
             },
              {

@@ -1,0 +1,43 @@
+Here's a comprehensive prompt for your next chat session about setting up an AI Prospecting System in Django:
+I'm building an AI Prospecting System for stress management services targeting fast-growing, high-stress companies in the DFW area. The system will be integrated into my Django application using PostgreSQL.
+I already have these Django models in my application:
+
+SiteUser (custom user model with email authentication)
+Company (storing company details including size, industry, location, stress scores, and JSON field for decision_makers)
+CompetitorTrend (tracking competitor trends and impact levels)
+PricingTier (tiers based on employee size with price and features)
+Email (templates for outreach)
+Outreach (tracking outreach to companies)
+
+I want to build an AI agent system integrated with these models, leveraging LangChain to handle interactions with LLMs. The system should have four specialized agents:
+
+Market Researcher: Researches market trends, competitor offerings, pricing in stress management industry for DFW
+Business Researcher: Identifies high-stress companies in DFW and updates the database
+Decision-Maker Identifier: Finds key contacts at target companies
+Outreach Specialist: Creates personalized outreach strategies
+
+The architecture should include:
+
+Agent system using LangChain
+Database tools to read/write to Django models
+Search/browser tools for web research
+Celery task queue for asynchronous operation
+Result storage in PostgreSQL
+
+I've added these models to support the agent system:
+
+AgentConfig (storing agent configurations)
+ToolConfig (defining available tools)
+AgentLog (logging agent executions)
+ToolLog (tracking tool usage)
+AgentTask (managing asynchronous tasks)
+
+Please help me implement:
+
+Database tools to interact with my existing models (Company, CompetitorTrend, etc.)
+The specific agents with appropriate tools and prompts
+A task system to run agents asynchronously
+Views to trigger agent tasks and display results
+How to orchestrate the entire workflow
+
+I need the implementation to follow Django best practices, properly use async with Celery, and handle API rate limits appropriately. The system should be maintainable and extensible as we add more capabilities.

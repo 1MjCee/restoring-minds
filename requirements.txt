@@ -9,3 +9,5 @@ django-unfold
 gunicorn
 psutil>=5.9.0
 
+pandas
+

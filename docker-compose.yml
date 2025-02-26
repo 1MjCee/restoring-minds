@@ -1,14 +1,19 @@
 services:
-  db:
-    image: postgres:14
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    environment:
-      - POSTGRES_DB=restore_db1
-      - POSTGRES_USER=jcharles
-      - POSTGRES_PASSWORD=254500
-    ports:
-      - "5432:5432"
+  # db:
+  #   image: postgres:14
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   environment:
+  #     - POSTGRES_DB=restore_db1
+  #     - POSTGRES_USER=jcharles
+  #     - POSTGRES_PASSWORD=254500
+  #   ports:
+  #     - "5432:5432"
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U jcharles -d restore_db1"]
+  #     interval: 5s
+  #     timeout: 5s
+  #     retries: 5
 
   web:
     build: .
@@ -17,7 +22,6 @@ services:
       - .:/app
       - static_volume:/app/static
       - media_volume:/app/media
-      - postgres_data:/app/data
       - socket_volume:/app
     environment:
       - DJANGO_SETTINGS_MODULE=restoring_minds.settings
@@ -26,8 +30,8 @@ services:
       - DJANGO_SUPERUSER_PASSWORD=restoring@123
       - DJANGO_SUPERUSER_FIRSTNAME=Jacqueline
       - DJANGO_SUPERUSER_LASTNAME=Campbell
-    depends_on:
-      - db
+    env_file:
+      - .env
 
   nginx:
     image: nginx:1.21
@@ -48,5 +52,4 @@ services:
 volumes:
   static_volume:
   media_volume:
-  postgres_data:
   socket_volume:

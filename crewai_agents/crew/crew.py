@@ -1,19 +1,23 @@
-from crewai import Crew, Process
-from configs.agents import get_agents
-from configs.tasks import get_tasks
+from crewai_agents.crew.configs.agents import market_researcher, business_researcher, decision_maker, outreach_specialist
 
-def get_crew(crew_name):
-    """Load a crew from the database and return a CrewAI Crew object."""
-    from django.apps import apps
-    CrewModel = apps.get_model('crewai_agents', 'Crew')
+def run_manually(agent_name, input_data):
+    """Run an agent manually and print the result."""
+    agents = {
+        "market_researcher": market_researcher,
+        "business_researcher": business_researcher,
+        "decision_maker": decision_maker,
+        "outreach_specialist": outreach_specialist
+    }
+    agent = agents.get(agent_name)
+    if not agent:
+        print(f"Unknown agent: {agent_name}")
+        return
 
-    django_crew = CrewModel.objects.get(name=crew_name)
-    agents = get_agents()
-    tasks = get_tasks()
+    print(f"Running {agent_name} manually...")
+    result = agent.run(input_data)
+    print(f"Result: {result}")
 
-    return Crew(
-        agents=agents,
-        tasks=tasks,
-        process=getattr(Process, django_crew.process),
-        verbose=django_crew.verbose
-    )
+def schedule_tasks():
+    """Setup for scheduled tasks is handled in settings.py with Celery Beat."""
+    print("Scheduled tasks are configured in settings.py with Celery Beat.")
+    print("Run 'celery -A myproject beat' to start the scheduler alongside the worker.")

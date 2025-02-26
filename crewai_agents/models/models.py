@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.core.exceptions import ValidationError
+from django.utils.html import format_html
+import uuid
 
 
 """Admin User Manager"""
@@ -61,53 +63,6 @@ class SiteUser(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return self.email
     
-"""Tool Model"""
-class Tool(models.Model):
-    name = models.CharField(max_length=255)  
-    type = models.CharField(max_length=255)  
-    description = models.TextField(default="")
-
-    def __str__(self):
-        return self.name
-
-"""Agent Model"""
-class Agent(models.Model):
-    name = models.CharField(max_length=255)
-    role = models.CharField(max_length=255)
-    goal = models.TextField(default="")
-    backstory = models.TextField(default="")
-    tools = models.ManyToManyField(Tool, related_name='agents')
-    verbose = models.BooleanField(default=False)
-    memory = models.BooleanField(default=False)
-    llm = models.CharField(max_length=255, blank=True, null=True)
-
-    def __str__(self):
-        return self.name
-
-"""Task Model"""
-class Task(models.Model):
-    order = models.IntegerField(default=0)
-    name = models.CharField(max_length=255)
-    description = models.TextField(default="")
-    expected_output = models.TextField(default="")
-    context = models.ManyToManyField('self', symmetrical=False, blank=True, related_name='dependent_tasks')
-    assigned_agent = models.ForeignKey(Agent, on_delete=models.SET_NULL, null=True, blank=True, related_name='tasks')
-
-    def __str__(self):
-        return self.name
-    class Meta:
-        ordering = ['order']
-    
-"""Crew Model"""
-class Crew(models.Model):
-    name = models.CharField(max_length=255)
-    agents = models.ManyToManyField(Agent, related_name='crews')
-    tasks = models.ManyToManyField(Task, related_name='crews')
-    process = models.CharField(max_length=50, default="sequential")
-    verbose = models.BooleanField(default=False)
-
-    def __str__(self):
-        return self.name
 
 """Company Model"""
 class Company(models.Model):
@@ -124,6 +79,23 @@ class Company(models.Model):
     notes = models.TextField(blank=True, null=True)
     targeting_reason = models.TextField()
 
+    # Contact Persons (stored as JSON)
+    decision_makers = models.JSONField(default=list, blank=True, help_text="""
+        List of contact persons in format:
+        [
+            {
+                "name": "string",
+                "role": "string",
+                "email": "email@example.com",
+                "phone": "string",
+                "linkedin_profile": "url",
+                "preferred_contact": "Email|Phone|LinkedIn",
+                "last_contact_date": "YYYY-MM-DD",
+                "notes": "string"
+            }
+        ]
+    """)
+
     def __str__(self):
         return self.company_name
     
@@ -138,53 +110,10 @@ class Company(models.Model):
             ).first()
         except PricingTier.DoesNotExist:
             return None
-    
-"""Contact Person Model"""
-class ContactPerson(models.Model):
-    CONTACT_METHODS = [
-        ('Email', 'Email'),
-        ('Phone', 'Phone'),
-        ('LinkedIn', 'LinkedIn'),
-    ]
-    name = models.CharField(max_length=255)
-    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='contacts')
-    role = models.CharField(max_length=255)
-    email = models.EmailField(blank=True, null=True)
-    phone = models.CharField(max_length=20, blank=True, null=True)
-    linkedin_profile = models.URLField(blank=True, null=True)
-    preferred_contact_method = models.CharField(max_length=50, choices=CONTACT_METHODS, default='Email')
-    last_contact_date = models.DateField(blank=True, null=True)
-    notes = models.TextField(blank=True, null=True)
-    
-    def __str__(self):
-        return self.name
+    class Meta:
+        verbose_name = 'Company'
+        verbose_name_plural = 'Companies'
 
-"""Outreach Model"""
-class Outreach(models.Model):
-    OUTREACH_METHODS = [
-        ('Email', 'Email'),
-        ('LinkedIn', 'LinkedIn Message'),
-        ('Phone', 'Phone Call'),
-    ]
-
-    RESPONSE_STATUSES = [
-        ('awaiting', 'Awaiting Response'),
-        ('Interested', 'Interested'),
-        ('No Response', 'No Response'),
-        ('Not Interested', 'Not Interested'),
-    ]
-
-    outreach_id = models.AutoField(primary_key=True)
-    company = models.OneToOneField(Company, on_delete=models.CASCADE, blank=True, null=True, related_name='outreach_company')
-    outreach_date = models.DateField(null=True, blank=True, default=None)
-    message = models.TextField(blank=True, null=True, default="")  
-    message_type = models.CharField(max_length=50, choices=OUTREACH_METHODS, default='Email')
-    response_status = models.CharField(max_length=50, choices=RESPONSE_STATUSES, default='No Response')
-    follow_up_date = models.DateField(blank=True, null=True, default=None)
-    comments = models.TextField(blank=True, null=True, default=None)
-
-    def __str__(self):
-        return f"Outreach {self.outreach_id} to {self.company}"
 
 """CompetitorTrend Model"""
 class CompetitorTrend(models.Model):
@@ -204,7 +133,8 @@ class CompetitorTrend(models.Model):
 
     def __str__(self):
         return f"Trend {self.trend_id} - {self.trend_description[:50]}"
-    
+
+
 """PricingTier Model"""
 class PricingTier(models.Model):
     min_employees = models.IntegerField(help_text="Minimum number of employees for this tier.")
@@ -242,4 +172,209 @@ class PricingTier(models.Model):
 
     class Meta:
         ordering = ['min_employees']
+
+"""EmailTemplate Model"""
+class Email(models.Model):
+    name = models.CharField(max_length=100)
+    recipient = models.EmailField(null=True, blank=True)
+    subject = models.CharField(max_length=200)
+    content = models.TextField()
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    is_default = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['-updated_at']
+
+    def __str__(self):
+        return f"{self.name} ({self.subject})"
+
+
+"""Outreach Model"""
+class Outreach(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('updated', 'Updated'),
+        ('sent', 'Email Sent'),
+        ('completed', 'Completed'),
+        ('failed', 'Failed')
+    ]
+    outreach_id = models.AutoField(primary_key=True)
+    company = models.OneToOneField(Company, on_delete=models.CASCADE, blank=True, null=True, related_name='outreach_company')
+    email = models.ForeignKey(Email, on_delete=models.SET_NULL, blank=True, null=True, related_name='outreach_email')
+    outreach_date = models.DateField(null=True, blank=True, default=None)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    comments = models.TextField(blank=True, null=True, default=None)
+
+    def __str__(self):
+        return f"Outreach {self.outreach_id} to {self.company}"
+    
+
+# =======================================
+# AI PROSPECTING AGENT SYSTEM MODELS
+# =======================================
+
+"""AgentConfig Model"""
+class AgentConfig(models.Model):
+    """Model for storing agent configurations."""
+    
+    AGENT_TYPES = [
+        ('market_researcher', 'Market Researcher'),
+        ('business_researcher', 'Business Researcher'),
+        ('decision_maker_identifier', 'Decision Maker Identifier'),
+        ('outreach_specialist', 'Outreach Specialist'),
+    ]
+    
+    name = models.CharField(max_length=100)
+    agent_type = models.CharField(max_length=50, choices=AGENT_TYPES)
+    description = models.TextField()
+    model_name = models.CharField(max_length=50, default='gpt-4')
+    temperature = models.FloatField(default=0.5)
+    system_prompt = models.TextField()
+    tools = models.JSONField(default=list, help_text="List of tool names this agent can use")
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"{self.name} ({self.agent_type})"
+    
+    class Meta:
+        verbose_name = "Agent Configuration"
+        verbose_name_plural = "Agent Configurations"
+
+"""ToolConfig Model"""
+class ToolConfig(models.Model):
+    """Model for storing tool configurations."""
+    
+    TOOL_TYPES = [
+        ('database', 'Database Tool'),
+        ('search', 'Search Tool'),
+        ('browser', 'Browser Tool'),
+        ('email', 'Email Tool'),
+        ('analysis', 'Analysis Tool'),
+        ('memory', 'Memory Tool'),
+    ]
+    
+    name = models.CharField(max_length=100)
+    tool_type = models.CharField(max_length=50, choices=TOOL_TYPES)
+    description = models.TextField()
+    configuration = models.JSONField(default=dict, help_text="Configuration parameters for the tool")
+    rate_limit = models.IntegerField(default=0, help_text="Rate limit in requests per minute (0 for unlimited)")
+    requires_auth = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"{self.name} ({self.tool_type})"
+    
+    class Meta:
+        verbose_name = "Tool Configuration"
+        verbose_name_plural = "Tool Configurations"
+
+"""AgentLog Model"""
+class AgentLog(models.Model):
+    """Model for storing agent execution logs."""
+    
+    STATUS_CHOICES = [
+        ('STARTED', 'Started'),
+        ('COMPLETED', 'Completed'),
+        ('FAILED', 'Failed'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    agent_name = models.CharField(max_length=100)
+    input_text = models.TextField()
+    output_text = models.TextField(blank=True, null=True)
+    intermediate_steps = models.JSONField(default=list, blank=True, null=True)
+    error_message = models.TextField(blank=True, null=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='STARTED')
+    execution_time = models.FloatField(blank=True, null=True, help_text="Execution time in seconds")
+    token_usage = models.JSONField(default=dict, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"{self.agent_name} Log - {self.created_at.strftime('%Y-%m-%d %H:%M:%S')}"
+    
+    class Meta:
+        verbose_name = "Agent Log"
+        verbose_name_plural = "Agent Logs"
+        ordering = ['-created_at']
+
+"""ToolLog Model"""
+class ToolLog(models.Model):
+    """Model for storing tool usage logs."""
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    tool_name = models.CharField(max_length=100)
+    called_at = models.DateTimeField(auto_now_add=True)
+    input_data = models.JSONField(default=dict, blank=True, null=True)
+    output_data = models.JSONField(default=dict, blank=True, null=True)
+    execution_time = models.FloatField(blank=True, null=True, help_text="Execution time in seconds")
+    error_message = models.TextField(blank=True, null=True)
+    agent_log = models.ForeignKey(AgentLog, on_delete=models.CASCADE, related_name='tool_logs', blank=True, null=True)
+    
+    def __str__(self):
+        return f"{self.tool_name} Usage - {self.called_at.strftime('%Y-%m-%d %H:%M:%S')}"
+    
+    class Meta:
+        verbose_name = "Tool Log"
+        verbose_name_plural = "Tool Logs"
+        ordering = ['-called_at']
+
+"""AgentTask Model"""
+class AgentTask(models.Model):
+    """Model for storing asynchronous agent tasks."""
+    
+    STATUS_CHOICES = [
+        ('PENDING', 'Pending'),
+        ('RUNNING', 'Running'),
+        ('COMPLETED', 'Completed'),
+        ('FAILED', 'Failed'),
+        ('CANCELLED', 'Cancelled'),
+    ]
+    
+    agent_type = models.CharField(max_length=50)
+    input_text = models.TextField()
+    context_data = models.JSONField(default=dict, blank=True, null=True)
+    result_data = models.JSONField(default=dict, blank=True, null=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
+    error_message = models.TextField(blank=True, null=True)
+    celery_task_id = models.CharField(max_length=50, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    started_at = models.DateTimeField(blank=True, null=True)
+    completed_at = models.DateTimeField(blank=True, null=True)
+    created_by = models.ForeignKey(SiteUser, on_delete=models.SET_NULL, related_name='agent_tasks', blank=True, null=True)
+    
+    def __str__(self):
+        return f"{self.agent_type} Task - {self.created_at.strftime('%Y-%m-%d %H:%M:%S')}"
+    
+    class Meta:
+        verbose_name = "Agent Task"
+        verbose_name_plural = "Agent Tasks"
+        ordering = ['-created_at']
+    
+    def cancel(self):
+        """Cancel the task if it's not completed yet."""
+        from celery.task.control import revoke
+        
+        if self.status in ['PENDING', 'RUNNING'] and self.celery_task_id:
+            revoke(self.celery_task_id, terminate=True)
+            self.status = 'CANCELLED'
+            self.save()
+            return True
+        return False
+    
+    def get_task_duration(self):
+        """Get the duration of the task in seconds."""
+        if self.completed_at and self.started_at:
+            return (self.completed_at - self.started_at).total_seconds()
+        return None
+    
+    @property
+    def is_active(self):
+        """Check if the task is currently active."""
+        return self.status in ['PENDING', 'RUNNING']
 
