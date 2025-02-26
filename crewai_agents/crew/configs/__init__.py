@@ -1,1 +1,2 @@
 from configs.agents import market_researcher, business_researcher, decision_maker, outreach_specialist
+from configs.tasks import run_market_researcher_scheduled, run_business_researcher_scheduled, run_decision_maker_scheduled, run_outreach_specialist_scheduled

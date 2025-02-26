@@ -14,14 +14,14 @@ api_key = os.environ.get('OPENAI_API_KEY')
 
 serper_api_key = os.environ["SERPER_API_KEY"]
 # Initialize LLM
-llm = ChatOpenAI(temperature=0.7, model="gpt-4", max_tokens=1000, openai_api_key=api_key)
+llm = ChatOpenAI(temperature=0.7, model="gpt-4o-mini", max_tokens=1000, openai_api_key=api_key)
 
 # Web search tool
 search = GoogleSerperAPIWrapper(
     serper_api_key=serper_api_key,
     gl="us",
     hl="en",
-    k=3
+    k=10
 )
 web_search_tool = Tool(
     name="web_search",

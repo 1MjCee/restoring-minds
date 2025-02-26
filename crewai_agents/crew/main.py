@@ -1,7 +1,7 @@
 import os
 import sys
 import django
-from configs import market_researcher, business_researcher, outreach_specialist
+from configs import market_researcher, business_researcher, outreach_specialist, run_business_researcher_scheduled
 
 """Calculate the path to the project root directory."""
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -18,8 +18,8 @@ django.setup()
 def run_manually(agent_name=None, input_data=None):
     """Run a single agent or all agents manually and print the results."""
     agents = {
-        "market_researcher": market_researcher,
-        "business_researcher": business_researcher,
+        # "market_researcher": market_researcher,
+        "business_researcher": run_business_researcher_scheduled,
         "outreach_specialist": outreach_specialist
     }
 
