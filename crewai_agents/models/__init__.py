@@ -1,1 +1,1 @@
-from .models import  SiteUser,  Company, Outreach, CompetitorTrend, PricingTier, Email, AgentConfig, ToolConfig, AgentLog, ToolLog, AgentTask
+from .models import  SiteUser,  Company, Outreach, CompetitorTrend, PricingTier, Email, AgentConfig, ToolConfig, AgentLog, ToolLog, AgentTask, ScriptStatus

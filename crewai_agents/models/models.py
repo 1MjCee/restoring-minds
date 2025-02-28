@@ -380,3 +380,35 @@ class AgentTask(models.Model):
         """Check if the task is currently active."""
         return self.status in ['PENDING', 'RUNNING']
 
+
+class ScriptStatus(models.Model):
+    """Model to track the status of the script execution"""
+    
+    STATUS_CHOICES = (
+        ('stopped', 'Stopped'),
+        ('running', 'Running'),
+    )
+    
+    status = models.CharField(
+        max_length=10,
+        choices=STATUS_CHOICES,
+        default='stopped'
+    )
+    
+    pid = models.IntegerField(null=True, blank=True)
+    started_at = models.DateTimeField(null=True, blank=True)
+    stopped_at = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        verbose_name = "Script Status"
+        verbose_name_plural = "Script Status"
+    
+    @classmethod
+    def get_current_status(cls):
+        """Get or create the current status record"""
+        status, created = cls.objects.get_or_create(pk=1)
+        return status
+    
+    def is_running(self):
+        """Check if the script is running"""
+

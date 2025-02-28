@@ -1,1 +1,1 @@
-from .database_tools import CompanyUpdateTool, CompetitorTrendTool, OutreachLogTool, fetch_outreach_data_tool, fetching_pending_outreach_ids
+from .database_tools import CompanyUpdateTool, CompetitorTrendTool, OutreachLogTool, fetch_outreach_data_tool, fetching_pending_outreach_ids, fetch_companies_tool, update_decision_makers_tool

@@ -15,7 +15,7 @@ load_dotenv(BASE_DIR / '.env')
 SECRET_KEY = 'django-insecure-j4652df$+!r3w2-5@-emifnrrskw3w5r(y(z#80&+ue+h$!ief'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['jacquelinecampbellai.com', '*', '127.0.0.1']
 
@@ -93,27 +93,27 @@ WSGI_APPLICATION = 'restoring_minds.wsgi.application'
 
 
 """Define Database Configuration"""
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql', 
-        'NAME': 'restoring_db',                     
-        'USER': 'jcharles',                        
-        'PASSWORD': '254500',               
-        'HOST': 'localhost',                       
-        'PORT': '5432',                             
-    }
-}
-
 # DATABASES = {
 #     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': os.environ.get('DB_NAME'),
-#         'USER': os.environ.get('DB_USER'),
-#         'PASSWORD': os.environ.get('DB_PASSWORD'),
-#         'HOST': os.environ.get('DB_HOST'),
-#         'PORT': os.environ.get('DB_PORT'),
+#         'ENGINE': 'django.db.backends.postgresql', 
+#         'NAME': 'restoring_db',                     
+#         'USER': 'jcharles',                        
+#         'PASSWORD': '254500',               
+#         'HOST': 'localhost',                       
+#         'PORT': '5432',                             
 #     }
 # }
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.environ.get('DB_NAME'),
+        'USER': os.environ.get('DB_USER'),
+        'PASSWORD': os.environ.get('DB_PASSWORD'),
+        'HOST': os.environ.get('DB_HOST'),
+        'PORT': os.environ.get('DB_PORT'),
+    }
+}
 
 
 # Password validation

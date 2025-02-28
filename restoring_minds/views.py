@@ -3,6 +3,18 @@ from django.utils.timezone import now
 from django.contrib.admin.views.decorators import staff_member_required
 from django.shortcuts import render, redirect
 from crewai_agents.models import Company, Outreach
+import subprocess
+import os
+from django.shortcuts import redirect
+
+from django.utils import timezone
+from django.contrib import messages
+from crewai_agents.models import ScriptStatus
+import subprocess
+import os
+from django.shortcuts import redirect
+from django.contrib import messages
+from django.contrib.admin.views.decorators import staff_member_required
 
 def dashboard_callback(request, context):
     # Get today's date
@@ -31,3 +43,4 @@ def dashboard_callback(request, context):
 def dashboard(request):
     context = dashboard_callback(request, {})
     return render(request, 'admin/dashboard.html', context)
+

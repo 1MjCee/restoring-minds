@@ -4,8 +4,10 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
-    path('', admin.site.urls),
+    path('dashboard/', admin.site.urls),
+    path('scripts/', include("crewai_agents.urls")),
 ]
+
 
 admin.autodiscover()
 

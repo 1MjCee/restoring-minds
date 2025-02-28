@@ -8,11 +8,11 @@ import subprocess
 import os
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from unfold.forms import AdminPasswordChangeForm, UserChangeForm, UserCreationForm
+from .admins import OutreachAdmin, CompanyAdmin
 
 admin.site.site_header = "Restoring Minds Admin"
 admin.site.site_title = "Restoring Minds Admin Portal"
 admin.site.index_title = "Welcome to Restoring Minds Admin Portal"
-
 
 """ Site User Admin """
 @admin.register(SiteUser)
@@ -26,41 +26,41 @@ class SiteUserAdmin(BaseUserAdmin, ModelAdmin):
     search_fields = ('email', 'first_name', 'last_name')
     ordering = ('email',)
 
-class CompanyAdmin(ModelAdmin):
-    list_display = ('company_name', 'employee_size', 'industry', 'location', 'last_updated')
-    list_filter = ('industry',)
-    search_fields = ('company_name', 'location')
-    ordering = ('company_name',)
-
+""" Competitor Trend Admin """
 class CompetitorTrendAdmin(ModelAdmin):
     list_display = ('trend_id', 'date', 'source', 'competitor_name', 'impact_level')
     list_filter = ('impact_level', 'date')
     search_fields = ('trend_description',)
 
+
+""" Pricing Tier Admin """
 class PricingTierAdmin(ModelAdmin):
     list_display = ('min_employees', 'max_employees', 'price', 'features')
     search_fields = ('features',)
 
-class OutreachAdmin(ModelAdmin):
-    list_display = ('outreach_id', 'company', 'status', 'outreach_date')
-    list_filter = ('status', 'outreach_date')
-    search_fields = ('company__company_name',)
 
+""" Agent Config Admin """
 class AgentConfigAdmin(ModelAdmin):
     list_display = ('name', 'agent_type', 'is_active', 'created_at')
     list_filter = ('agent_type', 'is_active')
     search_fields = ('name', 'description')
 
+
+""" Tool Config Admin """
 class ToolConfigAdmin(ModelAdmin):
     list_display = ('name', 'tool_type', 'is_active', 'created_at')
     list_filter = ('tool_type', 'is_active')
     search_fields = ('name',)
 
+
+""" Agent Log Admin """
 class AgentLogAdmin(ModelAdmin):
     list_display = ('agent_name', 'status', 'created_at', 'execution_time')
     list_filter = ('status', 'agent_name')
     search_fields = ('agent_name',)
 
+
+""" Tool Log Admin """
 class AgentTaskAdmin(ModelAdmin):
     list_display = ('agent_type', 'status', 'created_at', 'started_at', 'completed_at')
     list_filter = ('status', 'agent_type')

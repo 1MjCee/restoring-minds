@@ -4,10 +4,12 @@ from langchain.tools import Tool
 from django.apps import apps
 import json
 import ast
+from django.core.exceptions import ObjectDoesNotExist
+from django.utils import timezone
 
 class CompanyUpdateTool(BaseTool):
     name: str = "company_update"
-    description: str = "Updates or creates a company record in the database. Input should be a dict with keys: company_name (str), size (int), industry (str), location (str), stress_score (float, optional), decision_makers (dict, optional)."
+    description: str = "Updates or creates a company record in the database. Input should be a dict with keys: company_name (str), size (int), industry (str), location (str), stress_score (float, optional)"
 
     def _run(self, input_data):
         print(f"DEBUG - Input data type: {type(input_data)}")
@@ -62,7 +64,6 @@ class CompanyUpdateTool(BaseTool):
                         "industry": input_data["industry"],
                         "location": input_data["location"],
                         "stress_level_score": input_data.get("stress_score", 0)
-                        # Omitted decision_makers for now to simplify
                     }
                 )
             return f"Company {'created' if created else 'updated'}: {input_data['company_name']}"
@@ -75,9 +76,7 @@ class CompetitorTrendTool(BaseTool):
     name: str = "competitor_trend_update"
     description: str = "Logs competitor trends for analysis. Input should be a dict with keys: competitor_name (str), trend_description (str), impact_level (str)."
 
-    def _run(self, input_data):
-        print(f"DEBUG - Original input: {repr(input_data)}")
-        
+    def _run(self, input_data):        
         # Handle different input types
         if isinstance(input_data, str):
             # If the input is already a string containing quotes
@@ -139,98 +138,94 @@ class CompetitorTrendTool(BaseTool):
 class OutreachLogTool(BaseTool):
     name: str = "outreach_log"
     description: str = """
-    Log an outreach attempt for a company using an email template.
-    If the email_template_id doesn’t exist, create a default email template first.
-    Expects input dict with: company_id (int), email_template_id (int), status (str).
+    Update an existing outreach record's email foreign key with a new email template.
+    Expects input dict with: outreach_id (int), email_template_data (dict with 'name', 'subject', 'content', optionally 'recipient'), status (str, optional).
+    Creates a new Email record and links it to the Outreach identified by outreach_id.
     """
 
     def _run(self, input_data):
-        # Force parsing if the input is passed as a string
+        print(f"DEBUG - Raw input: {repr(input_data)}")
+        
+        # Handle string input from the agent
         if isinstance(input_data, str):
             try:
-                # Try JSON first
                 input_data = json.loads(input_data)
             except json.JSONDecodeError:
                 try:
-                    # Try Python literal eval for single-quoted dictionaries
                     import ast
                     input_data = ast.literal_eval(input_data)
                 except (ValueError, SyntaxError):
                     return "Error: Input string is not valid JSON or dictionary."
 
-        # Ensure input_data is a dict after deserialization
+        # Ensure input_data is a dict
         if not isinstance(input_data, dict):
-            return "Error: Input data is not a valid dictionary after parsing."
+            return "Error: Input data must be a dictionary."
+
+        # Extract required fields
+        try:
+            outreach_id = input_data["outreach_id"]
+            email_template_data = input_data.get("email_template_data")
+            status = 'updated'
+        except KeyError as e:
+            return f"Error: Missing required field {str(e)} in input: {repr(input_data)}"
 
         Outreach = apps.get_model('crewai_agents', 'Outreach')
-        Company = apps.get_model('crewai_agents', 'Company')
         Email = apps.get_model('crewai_agents', 'Email')
         
         try:
-            # Get the company
-            company = Company.objects.get(id=input_data["company_id"])
+            # Get the existing outreach record
+            outreach = Outreach.objects.get(outreach_id=outreach_id)
             
-            # Handle the email (either use existing or create new)
-            if "email_id" in input_data and input_data["email_id"]:
-                try:
-                    email = Email.objects.get(id=input_data["email_id"])
-                except Email.DoesNotExist:
-                    return f"Error: Email with ID {input_data['email_id']} not found"
-            elif "email_content" in input_data and input_data["email_content"]:
-                # Create a new email template with provided content
-                email_content = input_data["email_content"]
+            # Handle email update
+            if email_template_data:
+                # Create a new Email record based on your Email model
                 email = Email.objects.create(
-                    name=email_content.get("name", f"Email for {company.company_name}"),
-                    subject=email_content.get("subject", f"Introduction to {company.company_name}"),
-                    content=email_content.get("content", "Default content placeholder"),
-                    is_active=True
+                    name=email_template_data.get("name", f"Email for {outreach.company.company_name}"),
+                    recipient=email_template_data.get("recipient", None),  # Optional, nullable
+                    subject=email_template_data.get("subject", f"Introduction to {outreach.company.company_name}"),
+                    content=email_template_data.get("content", "Default content placeholder"),
+                    is_active=True,
+                    is_default=email_template_data.get("is_default", True)  
                 )
+                # Update the outreach record's email foreign key
+                outreach.email = email
+                if status: 
+                    outreach.status = status
+                outreach.save()
+                return f"Updated outreach {outreach.outreach_id} with email ID {email.id}"
             else:
-                # Create a generic template if neither email_id nor email_content provided
-                email = Email.objects.create(
-                    name=f"Auto-generated for {company.company_name}",
-                    subject=f"Introduction to {company.company_name}",
-                    content=f"This is an auto-generated email for {company.company_name} in the {company.industry} industry.",
-                    is_active=True
-                )
-            
-            # Create the outreach record
-            outreach = Outreach.objects.create(
-                company=company,
-                email=email,
-                status=input_data["status"]
-            )
-            
-            return f"Outreach logged: {outreach.outreach_id} with email: {email.id}"
-        except Company.DoesNotExist:
-            return f"Error: Company with ID {input_data['company_id']} not found"
+                return "Error: No email_template_data provided to update the email."
+
+        except Outreach.DoesNotExist:
+            return f"Error: Outreach with ID {outreach_id} not found."
         except Exception as e:
-            return f"Error: {str(e)}"
+            return f"Error updating outreach: {str(e)}"
+
+    def _arun(self, *args, **kwargs):
+        raise NotImplementedError("Async not supported yet.")
 
 
-def fetch_outreach_data(company_id):
-    if isinstance(company_id, str):
+def fetch_outreach_data(outreach_id):
+    """Fetch outreach data and associated company details using an outreach_id."""
+    if isinstance(outreach_id, str):
         try:
-            # Try to parse it as JSON
-            import json
-            data = json.loads(company_id)
-            # Extract company_id from the parsed JSON
-            if isinstance(data, dict) and 'company_id' in data:
-                company_id = data['company_id']
+            data = json.loads(outreach_id)
+            if isinstance(data, dict) and 'outreach_id' in data:
+                outreach_id = data['outreach_id']
         except json.JSONDecodeError:
-            # If it's not valid JSON but might be a digit string
-            if company_id.isdigit():
-                company_id = int(company_id)
+            if outreach_id.isdigit():
+                outreach_id = int(outreach_id)
             else:
-                return f"Error: Invalid company_id format: {company_id}. Please provide a numeric company ID."
+                return f"Error: Invalid outreach_id format: {outreach_id}. Please provide a numeric outreach ID."
 
     try:
-        Company = apps.get_model('crewai_agents', 'Company') 
         Outreach = apps.get_model('crewai_agents', 'Outreach')
-
-        company = Company.objects.get(id=company_id)
-        outreach = Outreach.objects.get(company=company)
+        outreach = Outreach.objects.get(outreach_id=outreach_id)  
+        company = outreach.company
+ 
+        
         return {
+            'outreach_id': outreach.outreach_id,
             'company_id': company.id,
             'company_name': company.company_name,
             'industry': company.industry,
@@ -239,32 +234,31 @@ def fetch_outreach_data(company_id):
             'decision_makers': company.decision_makers if company.decision_makers else {},
             'outreach_status': outreach.status,
             'outreach_email_id': outreach.email.id if outreach.email else None,
-            'outreach_date': str(outreach.outreach_date) if outreach.outreach_date else None,
-            'outreach_id': outreach.outreach_id
+            'outreach_date': str(outreach.outreach_date) if outreach.outreach_date else None
         }
-    except Company.DoesNotExist:
-        return "Company not found."
     except Outreach.DoesNotExist:
-        return "Outreach not found (should exist due to signal)."
+        return f"Outreach with ID {outreach_id} not found."
     except LookupError:
         return "Error: Model not found in app registry. Check app label."
+    except Exception as e:
+        return f"Error fetching outreach data: {str(e)}"
 
 fetch_outreach_data_tool = Tool(
     name="fetch_outreach_data",
-    description="Fetch existing outreach data and its associated company details. Provide the company_id as an integer (e.g., 1).",
+    description="Fetch existing outreach data and its associated company details. Provide the outreach_id as an integer (e.g., 1).",
     func=fetch_outreach_data
 )
 
-
 def fetch_pending_outreach_ids(dummy_input=None):
+    """Fetch a list of all outreach IDs that have status 'pending'."""
     try:
         Outreach = apps.get_model('crewai_agents', 'Outreach')
         
-        # Query for outreach records with 'Pending' status
-        pending_outreaches = Outreach.objects.filter(status='Pending')
+        # Query for outreach records with 'pending' status (case-sensitive to match default)
+        pending_outreaches = Outreach.objects.filter(status='pending')
         
         # Extract outreach IDs
-        outreach_ids = [outreach.id for outreach in pending_outreaches]
+        outreach_ids = [outreach.outreach_id for outreach in pending_outreaches]  # Use outreach_id field
         
         if not outreach_ids:
             return "No outreach records with pending status found."
@@ -276,9 +270,84 @@ def fetch_pending_outreach_ids(dummy_input=None):
     except Exception as e:
         return f"Error fetching pending outreach IDs: {str(e)}"
 
-# Create the tool
 fetching_pending_outreach_ids = Tool(
     name="fetch_pending_outreaches",
-    description="Fetch a list of all outreach IDs that have status 'Pending'.",
+    description="Fetch a list of all outreach IDs that have status 'pending'.",
     func=fetch_pending_outreach_ids
+)
+
+def fetch_companies_without_decision_makers(_=None):
+    try:
+        Company = apps.get_model('crewai_agents', 'Company')  
+        companies = Company.objects.filter(decision_makers__in=[[], None])
+        if not companies.exists():
+            return "No companies found without decision-makers."
+        
+        result = []
+        for company in companies:
+            result.append({
+                'company_id': company.id,
+                'company_name': company.company_name,
+                'size': company.employee_size,
+                'industry': company.industry,
+                'location': company.location,
+                'decision_makers': company.decision_makers if company.decision_makers else []
+            })
+        return result
+    except LookupError:
+        return "Error: Model 'Company' not found in app registry. Check app label."
+    except Exception as e:
+        return f"Error fetching companies: {str(e)}"
+
+fetch_companies_tool = Tool(
+    name="fetch_companies_without_decision_makers",
+    description="Fetches a list of companies with no decision-makers in their decision_makers JSON field.",
+    func=fetch_companies_without_decision_makers
+)
+
+def update_decision_makers(input_str):
+    print(f"DEBUG - Raw input: {repr(input_str)}")  
+    
+    if isinstance(input_str, str):
+        input_str = input_str.strip()
+        if input_str.startswith("```json"):
+            input_str = input_str[7:]
+        elif input_str.startswith("```"):
+            input_str = input_str[3:]
+        if input_str.endswith("```"):
+            input_str = input_str[:-3]
+        input_str = input_str.strip()
+        print(f"DEBUG - Stripped input: {repr(input_str)}")
+    
+    try:
+        data = json.loads(input_str)
+        print(f"DEBUG - Parsed data: {data}")
+        
+        company_id = data['company_id']
+        decision_makers = data['decision_makers']
+        
+        # Normalize 'title' to 'role' to match model expectations
+        for dm in decision_makers:
+            if 'title' in dm and 'role' not in dm:
+                dm['role'] = dm.pop('title')
+                print(f"DEBUG - Normalized 'title' to 'role': {dm}")
+        
+        Company = apps.get_model('crewai_agents', 'Company')
+        company = Company.objects.get(id=company_id)
+        company.decision_makers = decision_makers
+        company.save()
+        return f"Updated decision_makers for {company.company_name} (ID: {company_id})"
+    except json.JSONDecodeError as e:
+        return f"Error: Invalid JSON input: {repr(input_str)} - {str(e)}"
+    except KeyError as e:
+        return f"Error: Missing required field {str(e)} in input: {repr(input_str)}"
+    except ObjectDoesNotExist:
+        return f"Error: Company with ID {company_id} not found."
+    except Exception as e:
+        return f"Error updating company ID {company_id}: {str(e)}"
+
+update_decision_makers_tool = Tool(
+    name="update_decision_makers",
+    description="Updates the decision_makers JSON field for a company. Input is a JSON string with 'company_id' (int) and 'decision_makers' (list of dicts with 'name', 'role', 'email', 'phone', 'linkedin_profile', 'preferred_contact', 'last_contact_date', 'notes').",
+    func=update_decision_makers
 )

@@ -33,4 +33,74 @@
             {% endcomponent %}
         {% endfor %}
     {% endcomponent %}
+    <!-- Status and Run/Stop Button Section -->
+{% url 'run_script' as run_script_url %}
+{% url 'stop_script' as stop_script_url %}
+{% component "unfold/components/flex.html" with class="flex-col items-center justify-center mt-8 gap-4" %}
+    <!-- Status Indicator -->
+    <div class="flex items-center">
+        <span class="mr-2 font-medium">Status:</span>
+        <span id="script-status" class="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs font-semibold">
+            Stopped
+        </span>
+    </div>
+    
+    <!-- Run Button -->
+    <div id="run-button">
+        {% component "unfold/components/button.html" with href=run_script_url class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg shadow-md transform transition duration-300 hover:scale-105" %}
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 inline" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
+            </svg>
+            {% trans "Run Agents" %}
+        {% endcomponent %}
+    </div>
+    
+    <!-- Stop Button (initially hidden) -->
+    <div id="stop-button" style="display: none;">
+        {% component "unfold/components/button.html" with href=stop_script_url class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg shadow-md transform transition duration-300 hover:scale-105" %}
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 inline" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z" clip-rule="evenodd" />
+            </svg>
+            {% trans "Stop Agents" %}
+        {% endcomponent %}
+    </div>
+{% endcomponent %}
+
+{% block extrahead %}
+{{ block.super }}
+<script>
+    // Function to check script status
+    function checkScriptStatus() {
+        fetch('{% url "script_status" %}')
+            .then(response => response.json())
+            .then(data => {
+                const statusElement = document.getElementById('script-status');
+                const runButtonElement = document.getElementById('run-button');
+                const stopButtonElement = document.getElementById('stop-button');
+                
+                if (data.is_running) {
+                    statusElement.textContent = 'Running';
+                    statusElement.className = 'px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold';
+                    runButtonElement.style.display = 'none';
+                    stopButtonElement.style.display = 'inline-flex';
+                } else {
+                    statusElement.textContent = 'Stopped';
+                    statusElement.className = 'px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs font-semibold';
+                    runButtonElement.style.display = 'inline-flex';
+                    stopButtonElement.style.display = 'none';
+                }
+            })
+            .catch(error => console.error('Error fetching script status:', error));
+    }
+    
+    // Check status initially and every 5 seconds
+    document.addEventListener('DOMContentLoaded', function() {
+        checkScriptStatus();
+        setInterval(checkScriptStatus, 5000);
+    });
+</script>
 {% endblock %}
+
+   
+{% endblock %}
+
